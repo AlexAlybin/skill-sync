@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import skillsRoutes from './routes/skills.routes';
+import { authenticateJWT } from './middlewares/auth.middleware';
+import uploadRoutes from './routes/upload.routes';
 
 dotenv.config();
 
@@ -21,7 +23,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/auth', authRoutes);
-app.use('/skills', skillsRoutes);
+app.use('/skills', authenticateJWT, skillsRoutes);
+app.use('/upload', authenticateJWT, uploadRoutes);
 
 
 const PORT = process.env.PORT || 4000;

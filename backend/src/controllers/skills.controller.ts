@@ -5,19 +5,45 @@ const prisma = new PrismaClient();
 
 export const getSkills = async (req: Request, res: Response) => {
   try {
-    const userId = req.body.user.id;
-    const skills = await prisma.skill.findMany({ where: { userId } });
-    res.json(skills);
+    const { search = '', level, sortBy = 'name', sortOrder = 'asc', page = '1', limit = '10' } = req.query;
+
+    const where: any = {
+      userId: (req as any).user.id,
+      ...(search && {
+        name: {
+          contains: search.toString(),
+          mode: 'insensitive',
+        },
+      }),
+      ...(level && { level: parseInt(level.toString()) }),
+    };
+
+    const skills = await prisma.skill.findMany({
+      where,
+      orderBy: {
+        [sortBy.toString()]: sortOrder === 'desc' ? 'desc' : 'asc',
+      },
+      skip: (parseInt(page.toString()) - 1) * parseInt(limit.toString()),
+      take: parseInt(limit.toString()),
+    });
+
+    const total = await prisma.skill.count({ where });
+
+    res.json({
+      data: skills,
+      total,
+      page: parseInt(page.toString()),
+      limit: parseInt(limit.toString()),
+    });
   } catch (err) {
     res.status(500).json({ message: 'Server error', err });
   }
 };
 
 export const addSkill = async (req: Request, res: Response) => {
-  const { name, level } = req.body;
-  const userId = req.body.user.id;
-
   try {
+    const { name, level } = req.body;
+    const userId = (req as any).user.id;
     const skill = await prisma.skill.create({
       data: { name, level, userId },
     });
