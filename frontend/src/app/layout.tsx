@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthContext';
 import "./globals.css";
 import { useState } from "react";
+import NavigationBar from "@/components/navBar/NavigationBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
+            <NavigationBar />
             {children}
           </QueryClientProvider>
         </AuthProvider>

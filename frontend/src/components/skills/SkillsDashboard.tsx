@@ -120,7 +120,7 @@ export default function SkillsDashboard() {
           </table>
         )}
 
-        <div >
+        <div className={styles.buttonContainer}>
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}

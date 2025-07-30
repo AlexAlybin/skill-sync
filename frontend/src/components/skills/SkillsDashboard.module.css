@@ -36,3 +36,15 @@
 .formContainer {
   margin-bottom: 1.6rem;
 }
+
+.buttonContainer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  & button {
+    cursor: pointer;
+    margin: 0 0.5rem;
+    padding: 0.5rem;
+  }
+}

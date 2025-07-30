@@ -3,6 +3,7 @@ import { useState } from 'react';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
 import { appRoutes, paths, routeMap } from '@/lib/routes';
+import { useAuth } from '@/context/AuthContext';
 
 type Props = {
     type: 'login' | 'signup';
@@ -13,6 +14,7 @@ export default function AuthForm({ type }: Props) {
     const [error, setError] = useState('');
 
     const router = useRouter();
+    const { setUser } = useAuth();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -31,7 +33,9 @@ export default function AuthForm({ type }: Props) {
 
         try {
             const res = await api.post(endpoint, payload);
-            if (res.data) { router.push(`${paths.dashboard}/skills`); }
+            if (res.data) { 
+                setUser(res.data.user);
+                router.push(`${paths.dashboard}/skills`); }
         } catch (err: any) {
             const message =
                 err.response?.data?.message || 'Something went wrong';
