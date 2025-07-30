@@ -1,4 +1,3 @@
-// backend/routes/upload.ts
 import express from 'express';
 import { handleSkillUpload } from '../controllers/upload.controller';
 

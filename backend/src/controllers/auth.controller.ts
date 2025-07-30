@@ -44,6 +44,11 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
+export const logout = (req: Request, res: Response) => {
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
 export const getMe = async (req: Request, res: Response) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ message: 'No token' });
