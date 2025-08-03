@@ -22,6 +22,9 @@ const fetchSkills = async (params: {
 
 
 export default function SkillsDashboard() {
+  const [skills, setSkills] = useState<{ data: Skill[]; total: number }>({ data: [], total: 0 });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<number | ''>('');
   const [sortBy, setSortBy] = useState<'name' | 'level'>('name');
@@ -29,38 +32,45 @@ export default function SkillsDashboard() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const {
-    data: skills,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery<{ data: Skill[], total: number }>({
-    queryKey: ['skills', search, levelFilter, sortBy, sortOrder, page],
-    queryFn: () =>
-      fetchSkills({
-        search,
-        level: levelFilter,
-        sortBy,
-        sortOrder,
-        page,
-        limit,
-      }),
-  });
+  useEffect(() => {
+    fetchSkills({ search, level: levelFilter, sortBy, sortOrder, page, limit }).then(data => {
+      setSkills(data);
+    }).catch(err => {
+      console.error("Error fetching skills:", err);
+      setIsError(true);
+    });
+  }, [search, levelFilter, sortBy, sortOrder, page, limit]);
+
+  // Define refetch function to reload skills
+  const refetch = () => {
+    setIsLoading(true);
+    setIsError(false);
+    fetchSkills({ search, level: levelFilter, sortBy, sortOrder, page, limit })
+      .then(data => {
+        setSkills(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching skills:", err);
+        setIsError(true);
+        setIsLoading(false);
+      });
+  };
 
   const totalPages = skills ? Math.ceil(skills.total / limit) : 1;
 
   return (
     <div className={styles.container}>
-      <div className={styles.formContainer}>
+      {/* <div className={styles.formContainer}>
         <AddSkillForm onSkillAdded={refetch} />
       </div>
 
       <div className={styles.formContainer}>
         <UploadSkillsForm onSkillAdded={refetch} />
-      </div>
+      </div> */}
 
-      {isLoading && <p>Loading...</p>}
-      {isError && <p>Error loading skills.</p>}
+      {/* {isLoading && <p>Loading...</p>}
+      {isError && <p>Error loading skills.</p>} */}
 
       <div >
         <div>
@@ -141,3 +151,4 @@ export default function SkillsDashboard() {
     </div>
   );
 }
+

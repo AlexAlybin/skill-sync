@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.token;
+    console.log("authenticateJWT middleware called", { token });
     if (!token) return res.status(401).json({ message: 'Missing token' });
 
     try {

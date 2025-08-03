@@ -1,16 +1,14 @@
+"use client";
 import { FC } from "react";
 import Link from "next/link";
 import styles from './NavigationBar.module.css';
-import { useAuth } from "@/context/AuthContext";
 import LogoutButton from "./LogoutButton";
 
-const NavigationBar: FC = () => {
-    const { user } = useAuth();
-
-    return (
+const NavigationBar: FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
+        return (
         <nav>
             <ul className={styles.navList}>
-                {user ?
+                {isLoggedIn ?
                     <>
                         <li><Link href="/">Home</Link></li>
                         <li><Link href="/dashboard/skills">Skills</Link></li>
