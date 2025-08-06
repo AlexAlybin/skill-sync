@@ -3,17 +3,22 @@
 import AddSkillForm from './AddSkillForm';
 import styles from './SkillsDashboard.module.css';
 import { Skill } from '@/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import axios from '@/lib/axios';
 import { useQuery } from '@tanstack/react-query';
 import { UploadSkillsForm } from './UploadSkillsForm';
 
-const fetchSkills = async (params: {
-  search?: string;
-  level?: number | '';
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  page?: number;
+const PAGE_LIMIT = 10;
+
+type QueryParams = {
+  search: string;
+  level: number | '';
+  sortBy: 'name' | 'level';
+  sortOrder: 'asc' | 'desc';
+  page: number;
+};
+
+const fetchSkills = async (params: QueryParams & {
   limit?: number;
 }) => {
   const res = await axios.get('/skills', { params });
@@ -22,42 +27,26 @@ const fetchSkills = async (params: {
 
 
 export default function SkillsDashboard() {
-  const [skills, setSkills] = useState<{ data: Skill[]; total: number }>({ data: [], total: 0 });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [search, setSearch] = useState('');
-  const [levelFilter, setLevelFilter] = useState<number | ''>('');
-  const [sortBy, setSortBy] = useState<'name' | 'level'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [page, setPage] = useState(1);
-  const limit = 10;
+  const [query, setQuery] = useState<QueryParams>({
+    search: '',
+    level: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    page: 1,
+  });
+
+  const { error, data, refetch } = useQuery<{ data: Skill[]; total: number }>({
+    queryKey: ['skillsData'],
+    queryFn: () => fetchSkills({ ...query, limit: PAGE_LIMIT })
+  });
 
   useEffect(() => {
-    fetchSkills({ search, level: levelFilter, sortBy, sortOrder, page, limit }).then(data => {
-      setSkills(data);
-    }).catch(err => {
-      console.error("Error fetching skills:", err);
-      setIsError(true);
-    });
-  }, [search, levelFilter, sortBy, sortOrder, page, limit]);
+    refetch();
+  }, [query]);
 
-  // Define refetch function to reload skills
-  const refetch = () => {
-    setIsLoading(true);
-    setIsError(false);
-    fetchSkills({ search, level: levelFilter, sortBy, sortOrder, page, limit })
-      .then(data => {
-        setSkills(data);
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error("Error fetching skills:", err);
-        setIsError(true);
-        setIsLoading(false);
-      });
-  };
+  if (error) return <div>An error occurred: {error.message}</div>;
 
-  const totalPages = skills ? Math.ceil(skills.total / limit) : 1;
+  const totalPages = data ? Math.ceil(data.total / PAGE_LIMIT) : 1;
 
   return (
     <div className={styles.container}>
@@ -69,26 +58,21 @@ export default function SkillsDashboard() {
         <UploadSkillsForm onSkillAdded={refetch} />
       </div> */}
 
-      {/* {isLoading && <p>Loading...</p>}
-      {isError && <p>Error loading skills.</p>} */}
-
       <div >
         <div>
           <input
             type="text"
             placeholder="Search by name"
-            value={search}
+            value={query.search}
             onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1); // reset page on search
+              setQuery({ ...query, search: e.target.value, page: 1 });
             }}
             className={styles.input}
           />
           <select
-            value={levelFilter}
+            value={query.level}
             onChange={(e) => {
-              setLevelFilter(e.target.value ? parseInt(e.target.value) : '');
-              setPage(1);
+              setQuery({ ...query, level: e.target.value ? parseInt(e.target.value) : '', page: 1 });
             }}
           >
             <option value="">All Levels</option>
@@ -100,49 +84,43 @@ export default function SkillsDashboard() {
           </select>
         </div>
 
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : isError ? (
-          <p>Error loading skills.</p>
-        ) : (
-          <table className={styles.skillTable}>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th >Level</th>
+        <table className={styles.skillTable}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th >Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.data.map((skill: Skill) => (
+              <tr key={skill.id}>
+                <td>{skill.name}</td>
+                <td>{skill.level}</td>
               </tr>
-            </thead>
-            <tbody>
-              {skills?.data.map((skill) => (
-                <tr key={skill.id}>
-                  <td>{skill.name}</td>
-                  <td>{skill.level}</td>
-                </tr>
-              ))}
-              {skills?.data.length === 0 && (
-                <tr>
-                  <td colSpan={2}>
-                    No skills found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+            ))}
+            {data?.data.length === 0 && (
+              <tr>
+                <td colSpan={2}>
+                  No skills found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
 
         <div className={styles.buttonContainer}>
           <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
+            disabled={query.page === 1}
+            onClick={() => setQuery({ ...query, page: query.page - 1 })}
           >
             Previous
           </button>
           <span>
-            Page {page} of {totalPages}
+            Page {query.page} of {totalPages}
           </span>
           <button
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
+            disabled={query.page === totalPages}
+            onClick={() => setQuery({ ...query, page: query.page + 1 })}
           >
             Next
           </button>

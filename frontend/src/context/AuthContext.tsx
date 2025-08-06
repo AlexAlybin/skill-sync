@@ -3,35 +3,24 @@
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import api from '@/lib/axios';
 
-type User = { id: string; email: string; name: string, role?: string };
+export type User = { id: string; email: string; name: string, role?: string };
+
 type AuthContextType = {
   user: User | null;
-  setUser: Dispatch<SetStateAction<User | null>>
-  loading: boolean;
+  handleLogout: () => void;
 };
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true, setUser: () => {} });
+const AuthContext = createContext<AuthContextType>({ user: null, handleLogout: () => { } });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children, user: initialUser }: { children: React.ReactNode, user: User | null }) => {
+  const [user, setUser] = useState<User | null>(initialUser);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await api.get('/auth/me');
-        setUser(res.data.user);
-      } catch (err) {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+      setUser(initialUser);
+  }, [initialUser]);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading }}>
+    <AuthContext.Provider value={{ user, handleLogout: () => setUser(null) }}>
       {children}
     </AuthContext.Provider>
   );
